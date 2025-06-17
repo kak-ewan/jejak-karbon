@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Jejak Karbon - Dari Ladang ke Piring</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2e7d32;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+        button:hover {
+            background-color: #1b5e20;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            display: none;
+        }
+        .info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .carbon-equivalent {
+            font-style: italic;
+            margin-top: 10px;
+        }
+        .tips {
+            margin-top: 30px;
+            background-color: #fff8e1;
+            padding: 15px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kalkulator Jejak Karbon</h1>
+        <h2>Proyek "Dari Ladang ke Piring"</h2>
+        
+        <div class="info">
+            <p>Aplikasi ini membantu menghitung jejak karbon dari makanan yang kita konsumsi. 
+            Gunakan untuk memahami dampak lingkungan dari makanan sehari-hari.</p>
+        </div>
+        
+        <form id="carbonForm">
+            <div class="form-group">
+                <label for="foodType">Jenis Makanan:</label>
+                <select id="foodType" required>
+                    <option value="">Pilih jenis makanan</option>
+                    <option value="rice">Nasi (beras)</option>
+                    <option value="beef">Daging Sapi</option>
+                    <option value="chicken">Daging Ayam</option>
+                    <option value="fish">Ikan</option>
+                    <option value="vegetables">Sayuran</option>
+                    <option value="fruits">Buah-buahan</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="quantity">Jumlah (dalam kg):</label>
+                <input type="number" id="quantity" min="0.1" step="0.1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="transport">Jarak Transportasi (dalam km):</label>
+                <input type="number" id="transport" min="0" value="0">
+                <small>Jarak perkiraan dari tempat produksi ke konsumen</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="packaging">Kemasan:</label>
+                <select id="packaging">
+                    <option value="none">Tidak ada kemasan</option>
+                    <option value="plastic">Plastik</option>
+                    <option value="paper">Kertas/Kardus</option>
+                    <option value="glass">Kaca</option>
+                </select>
+            </div>
+            
+            <button type="button" onclick="calculateCarbon()">Hitung Jejak Karbon</button>
+        </form>
+        
+        <div id="result">
+            <h3>Hasil Perhitungan</h3>
+            <p>Jejak karbon untuk <span id="resultFood"></span> adalah:</p>
+            <p><strong><span id="resultCarbon"></span> kg CO₂e</strong></p>
+            <div class="carbon-equivalent">
+                <p>Setara dengan:</p>
+                <ul>
+                    <li><span id="equivalentCar"></span> km berkendara mobil</li>
+                    <li><span id="equivalentLight"></span> jam penggunaan lampu LED</li>
+                    <li><span id="equivalentTree"></span> pohon menyerap CO₂ dalam sehari</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="tips">
+            <h3>Tips Mengurangi Jejak Karbon Makanan:</h3>
+            <ul>
+                <li>Pilih makanan lokal dan musiman</li>
+                <li>Kurangi konsumsi daging, terutama daging sapi</li>
+                <li>Hindari makanan dengan kemasan berlebihan</li>
+                <li>Beli dalam jumlah besar untuk mengurangi kemasan</li>
+                <li>Kompos sisa makanan organik</li>
+                <li>Tanam sayuran sendiri jika memungkinkan</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Faktor emisi untuk berbagai jenis makanan (kg CO₂e per kg makanan)
+        const foodEmissions = {
+            rice: 2.7,
+            beef: 27.0,
+            chicken: 6.9,
+            fish: 3.0,
+            vegetables: 0.4,
+            fruits: 0.5
+        };
+        
+        // Faktor emisi transportasi (kg CO₂e per km per kg makanan)
+        const transportEmission = 0.0002;
+        
+        // Faktor emisi kemasan (kg CO₂e per kg makanan)
+        const packagingEmissions = {
+            none: 0,
+            plastic: 0.5,
+            paper: 0.3,
+            glass: 0.7
+        };
+        
+        function calculateCarbon() {
+            // Ambil nilai dari form
+            const foodType = document.getElementById('foodType').value;
+            const quantity = parseFloat(document.getElementById('quantity').value);
+            const transport = parseFloat(document.getElementById('transport').value) || 0;
+            const packaging = document.getElementById('packaging').value;
+            
+            if (!foodType || isNaN(quantity)) {
+                alert("Silakan pilih jenis makanan dan masukkan jumlah yang valid");
+                return;
+            }
+            
+            // Hitung emisi dari produksi makanan
+            const foodEmission = foodEmissions[foodType] * quantity;
+            
+            // Hitung emisi dari transportasi
+            const transportEmissionTotal = transportEmission * transport * quantity;
+            
+            // Hitung emisi dari kemasan
+            const packagingEmission = packagingEmissions[packaging] * quantity;
+            
+            // Total emisi
+            const totalEmission = foodEmission + transportEmissionTotal + packagingEmission;
+            
+            // Tampilkan hasil
+            document.getElementById('resultFood').textContent = `${quantity} kg ${getFoodName(foodType)}`;
+            document.getElementById('resultCarbon').textContent = totalEmission.toFixed(2);
+            
+            // Hitung perbandingan
+            document.getElementById('equivalentCar').textContent = (totalEmission / 0.12).toFixed(1);
+            document.getElementById('equivalentLight').textContent = (totalEmission / 0.05).toFixed(1);
+            document.getElementById('equivalentTree').textContent = Math.round(totalEmission / 0.021);
+            
+            // Tampilkan hasil
+            document.getElementById('result').style.display = 'block';
+        }
+        
+        function getFoodName(foodType) {
+            const names = {
+                rice: "nasi (beras)",
+                beef: "daging sapi",
+                chicken: "daging ayam",
+                fish: "ikan",
+                vegetables: "sayuran",
+                fruits: "buah-buahan"
+            };
+            return names[foodType];
+        }
+    </script>
+</body>
+</html>
